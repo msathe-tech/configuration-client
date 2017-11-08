@@ -1,0 +1,10 @@
+---
+applications:
+- name: config-client
+  memory: 768M
+  instances: 1
+  host: config-client-madhav
+  path: target/configuration-client-0.0.1-SNAPSHOT.jar
+  services:
+  - mysql-service
+  

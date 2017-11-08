@@ -1,0 +1,39 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building configuration-client 0.0.1-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:2.6.1:clean (default-clean) @ configuration-client ---
+[INFO] Deleting C:\stswork\workspace-sts-3.9.0.RELEASE\gs-centralized-configuration-master\complete\configuration-client\target
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ configuration-client ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 1 resource
+[INFO] Copying 1 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ configuration-client ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 3 source files to C:\stswork\workspace-sts-3.9.0.RELEASE\gs-centralized-configuration-master\complete\configuration-client\target\classes
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ configuration-client ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\stswork\workspace-sts-3.9.0.RELEASE\gs-centralized-configuration-master\complete\configuration-client\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ configuration-client ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.18.1:test (default-test) @ configuration-client ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.6:jar (default-jar) @ configuration-client ---
+[INFO] Building jar: C:\stswork\workspace-sts-3.9.0.RELEASE\gs-centralized-configuration-master\complete\configuration-client\target\configuration-client-0.0.1-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:1.5.7.RELEASE:repackage (default) @ configuration-client ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 3.430 s
+[INFO] Finished at: 2017-10-18T12:12:55-04:00
+[INFO] Final Memory: 40M/370M
+[INFO] ------------------------------------------------------------------------
