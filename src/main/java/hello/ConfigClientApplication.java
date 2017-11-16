@@ -47,6 +47,9 @@ class MessageRestController {
     @Value("${message:Hello default}")
     private String message;
     
+    @Value("${store:RDBMS}")
+    private String store;
+    
   
     @RequestMapping("/message")
     String getMessage() {
@@ -56,37 +59,14 @@ class MessageRestController {
     @ResponseStatus(code=HttpStatus.CREATED)
     @PostMapping(value="/add-albums")
     public String addAlbums(@RequestBody ArrayList<Album> list) {
-      log.info("addAlbums.....");
-  	  this.albums = list;
-  	  if(this.albums != null && this.albums.size() > 0) {
-  		  Album newAlbum = null;
-  		  Album album = null; 
-  		  Album savedAlbum = null;
-  		  for(int i = 0; i < albums.size(); i++) {
-  			  album = (Album) albums.get(i);
-  			  log.info("Got album - " + album.getTitle());
-  			  newAlbum = new Album(album.getTitle(), album.getArtist(), album.getReleaseYear(), album.getGenre());
-  			  log.info("Create new album instance - " + newAlbum.getTitle());
-  			  log.info("Trying to save new album");
-  			  try {
-  				  savedAlbum = (Album) ar.save(newAlbum);
-  			  } catch (Exception e) {
-  				  log.error(e.getMessage());
-  			  }
-  			  log.info("Check if album is saved to repo...");
-  			  if (savedAlbum == null) {
-  				  log.error("Failed to save album for title: " + newAlbum.getTitle());
-  				  return "Failed to save album for title: " + newAlbum.getTitle();
-  			  } else {
-  				  log.info("Album created for title: " + savedAlbum.getTitle());
-  			  }
-  		  }
-  		  return "Albums added: " + albums.size();
-  	  }
-  	  else {
-  		  log.error("No album found in request");
-  		  return "No album found in request";
-  	  }
+      log.info("addAlbums....." + store);
+      
+      if(store.equals("CACHE")) {
+    	  return cacheAlbums(list);
+      } else if (store.equals("RDBMS")) {
+    	  return persistAlbums(list);
+      }
+      return "Store type not found";
     }
     
     @GetMapping(value="/getAlbum")
@@ -128,9 +108,105 @@ class MessageRestController {
 		System.exit(-1);
 	}
     
-    @PostMapping("/cacheAlbums") 
+   /* @PostMapping("/cacheAlbums") 
     public String cacheAlbums(@RequestBody ArrayList<Album> list) {
     	log.info("/cacheAlbums.....");
+    	try {
+    	    String vcap_services = System.getenv("VCAP_SERVICES");
+    	    log.info("VCAP_SERVICES - \n" + vcap_services);
+    	    if (vcap_services != null && vcap_services.length() > 0) {
+    	        // parsing rediscloud credentials
+    	    	JSONObject rootJsonObject = new JSONObject(vcap_services);
+    	    	
+    	    	log.info("rootJsonObject json: " + rootJsonObject.toString());
+    	    	JSONArray rediscloudNode = rootJsonObject.getJSONArray("rediscloud");
+    	    	
+    	        log.info("rediscloud Json node: " + (rediscloudNode == null));
+    	        JSONObject credentials = getJsonObjectFromArray(rediscloudNode, "credentials");
+    	        
+    	        log.info("credentials Json node: \n" + credentials.toString());	
+    	        pool = new JedisPool(new JedisPoolConfig(),
+    	                credentials.getString("hostname"),
+    	                Integer.parseInt(credentials.getString("port")),
+    	                Protocol.DEFAULT_TIMEOUT,
+    	                credentials.getString("password")); 
+    	        if (pool == null) {
+    	        	log.error("jedis pool not created....");
+    	        }
+    	    }
+    	} catch (Exception ex) {
+    	    // vcap_services could not be parsed.
+    		log.error("vcap_services could not be parsed." + ex.getMessage());
+    		ex.printStackTrace();
+    	}
+    	
+    	Jedis jedis = pool.getResource();
+    	
+    	  this.albums = list;
+    	  if(this.albums != null && this.albums.size() > 0) {
+    		  Album newAlbum = null;
+    		  Album album = null; 
+    		  String savedAlbum = null;
+    		  for(int i = 0; i < albums.size(); i++) {
+    			  album = (Album) albums.get(i);
+    			  log.info("Got album - " + album.getTitle());
+    			  newAlbum = new Album(album.getTitle(), album.getArtist(), album.getReleaseYear(), album.getGenre());
+    			  log.info("Create new album instance - " + newAlbum.getTitle());
+    			  log.info("Trying to cache new album");
+    			  try {
+    				savedAlbum = jedis.set(newAlbum.getTitle(), newAlbum.toString());
+    			  } catch (Exception e) {
+    				  log.error(e.getMessage());
+    			  }
+    			  if (savedAlbum == null) {
+    				  log.error("Failed to cache album: " + newAlbum.getTitle());
+    			  } else {
+    				  log.info("Album saved to cache: " + newAlbum.getTitle());
+    			  }
+    		  }
+    		  return "Albums added: " + albums.size();
+    	  }
+    	  else {
+    		  log.error("No album found in request");
+    		  return "No album found in request";
+    	  }
+    }*/
+    
+    private String persistAlbums(ArrayList<Album> list) {
+    	this.albums = list;
+    	  if(this.albums != null && this.albums.size() > 0) {
+    		  Album newAlbum = null;
+    		  Album album = null; 
+    		  Album savedAlbum = null;
+    		  for(int i = 0; i < albums.size(); i++) {
+    			  album = (Album) albums.get(i);
+    			  log.info("Got album - " + album.getTitle());
+    			  newAlbum = new Album(album.getTitle(), album.getArtist(), album.getReleaseYear(), album.getGenre());
+    			  log.info("Create new album instance - " + newAlbum.getTitle());
+    			  log.info("Trying to save new album");
+    			  try {
+    				  savedAlbum = (Album) ar.save(newAlbum);
+    			  } catch (Exception e) {
+    				  log.error(e.getMessage());
+    			  }
+    			  log.info("Check if album is saved to repo...");
+    			  if (savedAlbum == null) {
+    				  log.error("Failed to save album for title: " + newAlbum.getTitle());
+    				  return "Failed to save album for title: " + newAlbum.getTitle();
+    			  } else {
+    				  log.info("Album created for title: " + savedAlbum.getTitle());
+    			  }
+    		  }
+    		  return "Albums added: " + albums.size();
+    	  }
+    	  else {
+    		  log.error("No album found in request");
+    		  return "No album found in request";
+    	  }
+    }
+    
+    private String cacheAlbums(ArrayList<Album> list) {
+    	log.info("cacheAlbums.....");
     	try {
     	    String vcap_services = System.getenv("VCAP_SERVICES");
     	    log.info("VCAP_SERVICES - \n" + vcap_services);
