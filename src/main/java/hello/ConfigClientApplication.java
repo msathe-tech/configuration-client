@@ -260,7 +260,7 @@ class MessageRestController {
     				  log.info("Album saved to cache: " + newAlbum.getTitle());
     			  }
     		  }
-    		  return "Albums added: " + albums.size();
+    		  return "Albums cached: " + albums.size();
     	  }
     	  else {
     		  log.error("No album found in request");
