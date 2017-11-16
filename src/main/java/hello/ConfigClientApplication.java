@@ -2,6 +2,8 @@ package hello;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
 import org.json.*;
 
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import jnr.ffi.types.size_t;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -86,19 +89,64 @@ class MessageRestController {
     
     @GetMapping(value="/countAlbums")
     public String countAlbum() {
-    	List<Album> albums = (List<Album>) ar.findAll();
     	
-    	if(albums == null) {
-    		String error = "There are no albums";
-			log.error(error);
-			return error;
-    	} 
-    	else {
-    		log.info("Albums found: " + albums.size());
-    		String titles = "Total albums: " + albums.size();
-    		albums.forEach(album -> log.info("Title: " + album.getTitle()));
-    		return titles;
-    	}
+    	if(store.equals("RDBMS")) {
+    		List<Album> albums = (List<Album>) ar.findAll();
+        	
+        	if(albums == null) {
+        		String error = "There are no albums";
+    			log.error(error);
+    			return error;
+        	} 
+        	else {
+        		log.info("Albums found: " + albums.size());
+        		String titles = "Total albums in DB: " + albums.size();
+        		albums.forEach(album -> log.info("Title (DB): " + album.getTitle()));
+        		return titles;
+        	}
+    	} else if(store.equals("CACHE")) {
+    		try {
+        	    String vcap_services = System.getenv("VCAP_SERVICES");
+        	    log.info("VCAP_SERVICES - \n" + vcap_services);
+        	    if (vcap_services != null && vcap_services.length() > 0) {
+        	        // parsing rediscloud credentials
+        	    	JSONObject rootJsonObject = new JSONObject(vcap_services);
+        	    	
+        	    	log.info("rootJsonObject json: " + rootJsonObject.toString());
+        	    	JSONArray rediscloudNode = rootJsonObject.getJSONArray("rediscloud");
+        	    	
+        	        log.info("rediscloud Json node: " + (rediscloudNode == null));
+        	        JSONObject credentials = getJsonObjectFromArray(rediscloudNode, "credentials");
+        	        
+        	        log.info("credentials Json node: \n" + credentials.toString());	
+        	        pool = new JedisPool(new JedisPoolConfig(),
+        	                credentials.getString("hostname"),
+        	                Integer.parseInt(credentials.getString("port")),
+        	                Protocol.DEFAULT_TIMEOUT,
+        	                credentials.getString("password")); 
+        	        if (pool == null) {
+        	        	log.error("jedis pool not created....");
+        	        }
+        	    }
+        	} catch (Exception ex) {
+        	    // vcap_services could not be parsed.
+        		log.error("vcap_services could not be parsed." + ex.getMessage());
+        		ex.printStackTrace();
+        	}
+        	
+        	Jedis jedis = pool.getResource();
+        	Set<String> keys = jedis.keys("*");
+        	if(keys != null) {
+        		keys.forEach(title -> log.info("Title (cache): " + title));
+            	String titles = "Total albums in cache: " + keys.size();
+            	return titles;
+        	} else {
+        		log.error("No title found in cache");
+        		return "No title found in cache";
+        	}
+        	
+       }
+    	
     }
     
     @GetMapping("/kill-instance")
