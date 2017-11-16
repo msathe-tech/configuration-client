@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 import org.json.*;
 
 import org.slf4j.Logger;
@@ -22,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import jnr.ffi.types.size_t;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -94,7 +96,7 @@ class MessageRestController {
     		List<Album> albums = (List<Album>) ar.findAll();
         	
         	if(albums == null) {
-        		String error = "There are no albums";
+        		String error = "There are no albums in DB";
     			log.error(error);
     			return error;
         	} 
@@ -146,6 +148,7 @@ class MessageRestController {
         	}
         	
        }
+		return "No clue what happened, can't find the store";
     	
     }
     
@@ -330,3 +333,59 @@ class MessageRestController {
     }
 }
 
+
+@Entity
+class Album {
+
+	@Id
+	private String title;
+	
+	private String artist;
+	private int releaseYear;
+	private String genre;
+	
+	public Album() {
+		
+	}
+	
+	public Album(String title) {
+		this.title = title;
+	}
+	
+	public Album(String title, String artist, int releaseYear, String genre) {
+		this.title = title;
+		this.artist = artist;
+		this.releaseYear = releaseYear;
+		this.genre = genre;
+	}
+	
+	public String toString() {
+		return "Album: \n" + title + "\n" + artist + "\n" + releaseYear + "\n" + genre;
+	}
+	
+	public String getArtist() {
+		return artist;
+	}
+	public void setArtist(String artist) {
+		this.artist = artist;
+	}
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	public int getReleaseYear() {
+		return releaseYear;
+	}
+	public void setReleaseYear(int releaseYear) {
+		this.releaseYear = releaseYear;
+	}
+	public String getGenre() {
+		return genre;
+	}
+	public void setGenre(String genre) {
+		this.genre = genre;
+	}
+	
+}
