@@ -11,6 +11,7 @@ There are two options - RDBMS and CACHE. The service stores the JSON data either
 
 # Configuration Server
 *pom.xml*
+
 Make sure you have following dependency 
 <dependency>
   <groupId>org.springframework.cloud</groupId>
