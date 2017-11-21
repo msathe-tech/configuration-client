@@ -10,7 +10,7 @@ The application processes JSON data sent by client and uses configuration to dec
 There are two options - RDBMS and CACHE. The service stores the JSON data either in MySQL (RDBMS) or Redis (CACHE).
 
 # Configuration Server
-*pom.xml 
+*pom.xml*
 Make sure you have following dependency 
 <dependency>
   <groupId>org.springframework.cloud</groupId>
