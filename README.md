@@ -54,6 +54,7 @@ You can clone the server side code using https://github.com/msathe-tech/configur
 The configuration client is basically your business service. Don't let the name client bother you, it is just for this demo. It is a client for the configuration service but otherwise your this will be a service for some business function. In this case the client perform two tasks: show a text message stored in the config files on the server and process a JSON and store it either in RDBMS or CACHE depening on the flag in the config file on the server. 
 
 *pom.xml*
+
 The POM will contain all the dependencies that your business service needs. From config client point of view following are the two key depencies that need to be there - 
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -66,7 +67,55 @@ The POM will contain all the dependencies that your business service needs. From
 
 The 'spring-cloud-starter-config' is meant for identifying the service as a config client. The 'spring-boot-starter-actuator' provides health indicators but the important feature of Actuator we are interested in here is the ability to refresh the configuration. Most significant advantage of this architecture is that you don't need to restart the server or the client to take into account updated configuration. If there is a change in configuration just invoke '/refresh' on the client service and it will request new configuration from the server. The client side @Value variables will be refreshed with the updated configuration. 
 
+* bootstrap.properties *
+
+The resources folder of the applicatio project needs to include bootstrap.properties file. This is similar to application.properties file but it is loaded before the application.properties. From the docs - "A Spring Cloud application operates by creating a "bootstrap" context, which is a parent context for the main application. Out of the box it is responsible for loading configuration properties from the external sources, and also decrypting properties in the local external configuration files." 
+Instead of .properties you can also use .yml files. 
+
+spring.cloud.config.uri=<URL of the config service>
+spring.application.name=<your app name, should match with .properties you created on config server>
+management.security.enabled=false
+security.basic.enabled=false
+
+* Application code *
+
+The client which is basically your business service needs to include few annotations other than your code for business logic. 
+@RefreshScope - used to refresh the configuration in runtime, you can invoke /refresh on the client service to pull new configuration from the config server
+
+@Value("${store:RDBMS}")
+    private String store;
+@Value("${message:Hello default}")
+    private String message;
+    
+The @Value matches the key in the <application>.properties files to the variable and stores the value. If the key is not found in the properties file the value will be defaulted to :<value>. The default value is important to avoid runtime exceptions if the server is unable to find the key. It can also be used to progressively add dynamic configuration to the file. 
+
+There is a lot more in this code, but I'll update that information in stages. 
+For now you can refer to the client code here - https://github.com/msathe-tech/configuration-client
+
+This service accepts JSON payload using -
+ @ResponseStatus(code=HttpStatus.CREATED)
+    @PostMapping(value="/add-albums")
+    public String addAlbums(@RequestBody ArrayList<Album> list) {
+    .....
+    
+Based on the value of 'store' it will either store the data in MySQL or Redis cache. Spring Boot really makes it easy to use JPA using CrudRepository interface. You don't need to write a single line of code to perform basic DB operations. 
+public interface AlbumRepository extends CrudRepository<Album, String> {
+}
+
+You need following dependencies in the pom.xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+<dependency>
+  <groupId>mysql</groupId>
+  <artifactId>mysql-connector-java</artifactId>
+  <scope>runtime</scope>
+</dependency>
+    
 
 
-
+# PCF Deployment
+You need to have account on PCF web services or have your own PCF setup where you can deploy the applications. The PCF takes care of containerizing the application, creating public routes, etc. There is a lot more to PCF, but some other time. 
+For now you just need to make sure you have the Manifest file when you 'cf push'. The 
 
