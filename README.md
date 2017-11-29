@@ -169,7 +169,7 @@ To count the size of the Jedis cache and access all the data in the cache you ca
 Set<String> keys = jedis.keys("*");
 You can process the all the Jedis objects using Java Lambda streams to improve performance. 
 
-# Deploy application on the Cloud 
+# Deploy application in the Cloud 
 You need to have account on PCF web services or have your own PCF setup where you can deploy the applications. The PCF takes care of containerizing the application, creating public routes, etc. There is a lot more to PCF, but some other time. 
 Following are the steps to compile and deploy the application on the Pivotal Cloud Foundry
 1. mvn clean package
