@@ -77,7 +77,7 @@ spring.application.name=<your app name, should match with .properties you create
 management.security.enabled=false
 security.basic.enabled=false
 
-* Application code *
+* Application code 
 
 The client which is basically your business service needs to include few annotations other than your code for business logic. 
 @RefreshScope - used to refresh the configuration in runtime, you can invoke /refresh on the client service to pull new configuration from the config server
@@ -92,12 +92,38 @@ The @Value matches the key in the <application>.properties files to the variable
 There is a lot more in this code, but I'll update that information in stages. 
 For now you can refer to the client code here - https://github.com/msathe-tech/configuration-client
 
+# Processing JSON 
+
 This service accepts JSON payload using -
  @ResponseStatus(code=HttpStatus.CREATED)
     @PostMapping(value="/add-albums")
     public String addAlbums(@RequestBody ArrayList<Album> list) {
     .....
     
+The @RequestBody takes care of mapping the HTTP request's JSON payload to the Array List of Album class. 
+Sample JSON payload is given below -
+
+[
+   {
+        "artist": "Ajay-Atul",
+        "title": "Sairat",
+        "releaseYear": "2015",
+        "genre": "Bollywood"
+    },
+    {
+        "artist": "Ed Sheeran",
+        "title": "Divide",
+        "releaseYear": "2017",
+        "genre": "Pop"
+    }
+ ]
+
+The HTTP request should have following header to make it a JSON payload.
+
+Content-Type: application/json
+
+# Using JPA and MySQL
+
 Based on the value of 'store' it will either store the data in MySQL or Redis cache. Spring Boot really makes it easy to use JPA using CrudRepository interface. You don't need to write a single line of code to perform basic DB operations. 
 public interface AlbumRepository extends CrudRepository<Album, String> {
 }
@@ -113,9 +139,49 @@ You need following dependencies in the pom.xml
   <scope>runtime</scope>
 </dependency>
     
+Make sure you have MySQL service created on the CF. You also need to bind the service to your application. The application manifest can have services: <MySQL service name>
+
+Binding the service with the application ensures the connection details are passed on to the application. This makes the application location independent. If you move your code from dev to test to prod you don't need to worry about changing the connection URL. The CF will take care of passing the appropriate connection details to the app. 
+
+# Using Redis Cache
+Using Redis cache requires little more code than using JPA and MySQL. The CF maintains the environment information including that of the bound services in "VCAP_SERVICES". 'VCAP_SERVICES' environment variable is passed on to the application and can be accssed using System.getenv(). The String is actually a JSON data that you need to parse to retrive host, port and credentials of the Redis service. 
+Take a look at the code to see how it is done. 
+*Disclaimer: this is not the most efficient JSON parsing code, but you will be kind enough to forgive me for that :)
+
+You need to create an instance of JedisPool as shown below 
+
+pool = new JedisPool(new JedisPoolConfig(),
+        	                credentials.getString("hostname"),
+        	                Integer.parseInt(credentials.getString("port")),
+        	                Protocol.DEFAULT_TIMEOUT,
+        	                credentials.getString("password")); 
+                          
+                          
+Then get a Jedis resource 
+
+Jedis jedis = pool.getResource();
+And then add Album to the jedis as key, value pair
+
+savedAlbum = jedis.set(newAlbum.getTitle(), newAlbum.toString());
 
 
-# PCF Deployment
+To count the size of the Jedis cache and access all the data in the cache you can use
+Set<String> keys = jedis.keys("*");
+You can process the all the Jedis objects using Java Lambda streams to improve performance. 
+
+# Deploy application on the Cloud 
 You need to have account on PCF web services or have your own PCF setup where you can deploy the applications. The PCF takes care of containerizing the application, creating public routes, etc. There is a lot more to PCF, but some other time. 
-For now you just need to make sure you have the Manifest file when you 'cf push'. The 
+Following are the steps to compile and deploy the application on the Pivotal Cloud Foundry
+1. mvn clean package
+2. Make sure the build is clean and the 'target' folder contains the application JAR
+3. Create a manifest.yml and include key parameters such as name, memory, instances, host, path, services. Refer to the code for sample
+4. cf login -a https://api.run.pivotal.io 
+5. Go to the application folder that has manifest.yml
+6. cf push
+
+That's it for now.
+Good luck for building Cloud Native applications!
+
+Cheers!
+
 
